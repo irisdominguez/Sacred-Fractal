@@ -3,7 +3,7 @@ var FractalConfig = function() {
 	this.petals = 6;
 	this.innerCircle = true;
 	this.innerFlower = true;
-	this.colorize = true;
+	this.colorize = false;
 	this.grabImage = function() {
 		var dataURL = document.getElementById("fractalCanvas").toDataURL('image/png');
 		window.open(dataURL, '_blank');
