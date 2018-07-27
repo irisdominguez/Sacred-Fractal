@@ -3,6 +3,7 @@ var FractalConfig = function() {
 	this.petals = 6;
 	this.innerCircle = true;
 	this.innerFlower = true;
+	this.colorize = true;
 	this.grabImage = function() {
 		var dataURL = document.getElementById("fractalCanvas").toDataURL('image/png');
 		window.open(dataURL, '_blank');
@@ -41,10 +42,11 @@ window.addEventListener('resize', redraw, false);
 
 window.onload = function() {
 	var gui = new dat.GUI();
-	gui.add(fcg, 'iterations', 1, 6).step(1).onChange(redraw);
+	gui.add(fcg, 'iterations', 1, 8).step(1).onChange(redraw);
 	gui.add(fcg, 'petals', 1, 20).step(1).onChange(redraw);
 	gui.add(fcg, 'innerCircle').onChange(redraw);
 	gui.add(fcg, 'innerFlower').onChange(redraw);
+	gui.add(fcg, 'colorize').onChange(redraw);
 	gui.add(fcg, 'grabImage');
 
 	redraw();
@@ -59,8 +61,20 @@ function clearCanvas() {
 function drawFlowerOfLife(x, y, rad, level) {
 	if (level == 0) return;
 
+	var d = level / fcg.iterations;
 	ctx.strokeStyle = '#fff';
-	ctx.lineWidth = rad / size;
+	if (fcg.colorize) {
+		var r = 255 * (d * 2 - 1.0);
+		var g = 255 * (1.0 - (d));
+		var b = 255 * (d * 2);
+		var a = 1.0;
+		ctx.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+	}
+	else {
+		var a = d;
+		ctx.strokeStyle = 'rgba(255, 255, 255, ' + a + ')';
+	}
+	ctx.lineWidth = Math.pow(d, 0.2);
 
 	if (fcg.innerCircle) {
 		ctx.beginPath();
@@ -68,18 +82,28 @@ function drawFlowerOfLife(x, y, rad, level) {
 		ctx.stroke();
 	}
 
-	if (fcg.innerFlower) {
-		drawFlowerOfLife(x, y, rad * 0.5, level - 1);
-	}
+	var points = [];
 
 	for (var i = 0; i < fcg.petals; i++) {
 		var angle = (Math.PI * 2) / fcg.petals * i;
 		var nx = x + rad * Math.sin(angle);
 		var ny = y + rad * Math.cos(angle);
-		ctx.lineWidth = rad / size;
+		points.push({'x': nx, 'y': ny});
+	}
+
+	for (var pi in points) {
+		var p = points[pi];
 		ctx.beginPath();
-		ctx.arc(nx, ny, rad, 0, 2 * Math.PI);
+		ctx.arc(p.x, p.y, rad, 0, 2 * Math.PI);
 		ctx.stroke();
-		drawFlowerOfLife(nx, ny, rad * 0.5, level - 1);
+	}
+
+	if (fcg.innerFlower) {
+		drawFlowerOfLife(x, y, rad * 0.5, level - 1);
+	}
+
+	for (var pi in points) {
+		var p = points[pi];
+		drawFlowerOfLife(p.x, p.y, rad * 0.5, level - 1);
 	}
 }
